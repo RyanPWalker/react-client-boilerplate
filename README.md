@@ -1,2 +1,2 @@
-# RyanPWalker
-A website about a hero who's story is still being written
+# React-Client-Boilerplate
+My own version of a simple react boilerplate. Will be improved over time.
