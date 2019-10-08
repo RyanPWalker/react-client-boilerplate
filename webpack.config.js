@@ -1,12 +1,40 @@
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const path = require('path');
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const webpack = require('webpack');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const path = require('path');
+const packageJson = require('./package.json');
 
 const ENV = process.env.NODE_ENV || 'development';
+
 module.exports = {
-    entry: './src/index.js',
+    entry: {
+        [`${packageJson.name}.${packageJson.version}`]: './src/index.js'
+    },
+    optimization: {
+        minimizer: [
+            new TerserJSPlugin({
+                terserOptions: {
+                    output: {
+                        comments: false,
+                    },
+                },
+                extractComments: false,
+            }),
+            new OptimizeCSSAssetsPlugin({})
+        ],
+        splitChunks: {
+            cacheGroups: {
+                styles: {
+                    name: `${packageJson.name}.${packageJson.version}`,
+                    test: /\.(le|c)ss$/,
+                    chunks: 'all',
+                    enforce: true,
+                },
+            },
+        },
+    },
     module: {
         rules: [
             {
@@ -17,20 +45,25 @@ module.exports = {
                 }
             },
             {
-                test: /\.less$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: ['css-loader', 'less-loader']
-                })
+                test: /\.(le|c)ss$/,
+                use: [
+                  {
+                    loader: MiniCssExtractPlugin.loader,
+                    options: {
+                      hmr: ENV === 'development',
+                    },
+                  },
+                  'css-loader',
+                  'less-loader',
+                ],
             }
         ]
     },
-    output: {
-        filename: '[name].min.js',
-        path: path.join(__dirname, 'dist')
-    },
     plugins: [
-        new ExtractTextPlugin('[name].min.css'),
+        new MiniCssExtractPlugin({
+          filename: '[name].min.css',
+          ignoreOrder: false, // Enable to remove warnings about conflicting order
+        }),
         new HtmlWebpackPlugin({
             template: 'src/index.html',
             minify: {
@@ -46,14 +79,25 @@ module.exports = {
                 minifyURLs: true,
             },
         }),
-        new UglifyJSPlugin(),
         new webpack.DefinePlugin({
+            // PRODUCTION: JSON.stringify(ENV) === 'production',
             'process.env.NODE_ENV': JSON.stringify(ENV)
         }),
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+        new OptimizeCSSAssetsPlugin({
+            cssProcessorPluginOptions: {
+              preset: ['default', { discardComments: { removeAll: true } }],
+            },
+            canPrint: true
+        })
     ],
+    output: {
+        filename: '[name].min.js',
+        path: path.join(__dirname, 'dist'),
+        publicPath: path.join(__dirname, 'dist'),
+    },
     devServer: {
         contentBase: path.join(__dirname, 'dist'),
-        port: 4000
+        port: 3000
     }
 };
