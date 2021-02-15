@@ -1,15 +1,15 @@
 {
     "presets": [
-        ["env"],
-        "react"
+        ["@babel/preset-env", {
+            "useBuiltIns": false
+        }],
+        ["@babel/preset-flow"],
+        ["@babel/preset-react"]
     ],
     "plugins": [
-        "transform-class-properties",
-        ["transform-runtime", {
-            "polyfill": false,
-            "regenerator": true
-        }],
-        "transform-object-rest-spread",
-        "transform-react-remove-prop-types"
+        ["@babel/plugin-proposal-class-properties"],
+        ["@babel/plugin-proposal-object-rest-spread"],
+        ["@babel/plugin-proposal-optional-chaining"],
+        ["@babel/plugin-transform-runtime"]
     ]
 }
