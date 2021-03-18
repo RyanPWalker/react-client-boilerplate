@@ -34,16 +34,6 @@ module.exports = {
                 },
             }),
         ],
-        splitChunks: {
-            cacheGroups: {
-                styles: {
-                    idHint: `${packageJson.name}.${packageJson.version}`,
-                    type: 'css/mini-extract',
-                    chunks: 'all',
-                    enforce: true,
-                },
-            },
-        },
     },
     module: {
         rules: [
@@ -67,7 +57,6 @@ module.exports = {
     plugins: [
         new MiniCssExtractPlugin({
             filename: '[name].min.css',
-            chunkFilename: '[name].min.css',
         }),
         new HtmlWebpackPlugin({
             template: 'src/index.html',
