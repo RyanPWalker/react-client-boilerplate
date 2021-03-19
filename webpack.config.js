@@ -1,12 +1,13 @@
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const webpack = require('webpack');
-const path = require('path');
 const packageJson = require('./package.json');
 
-const ENV = process.env.NODE_ENV || 'development';
+const ENV = process.env.NODE_ENV || 'production';
+const isDev = process.env.NODE_ENV !== 'production';
+console.log('isDev', isDev);
 
 module.exports = {
     entry: {
@@ -22,18 +23,17 @@ module.exports = {
                 },
                 extractComments: false,
             }),
-            new OptimizeCSSAssetsPlugin({})
-        ],
-        splitChunks: {
-            cacheGroups: {
-                styles: {
-                    name: `${packageJson.name}.${packageJson.version}`,
-                    test: /\.(le|c)ss$/,
-                    chunks: 'all',
-                    enforce: true,
+            new CssMinimizerPlugin({
+                minimizerOptions: {
+                    preset: [
+                        'default',
+                        {
+                            discardComments: { removeAll: true },
+                        },
+                    ],
                 },
-            },
-        },
+            }),
+        ],
     },
     module: {
         rules: [
@@ -47,22 +47,16 @@ module.exports = {
             {
                 test: /\.(le|c)ss$/,
                 use: [
-                  {
-                    loader: MiniCssExtractPlugin.loader,
-                    options: {
-                      hmr: ENV === 'development',
-                    },
-                  },
-                  'css-loader',
-                  'less-loader',
+                    isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    'less-loader',
                 ],
             }
         ]
     },
     plugins: [
         new MiniCssExtractPlugin({
-          filename: '[name].min.css',
-          ignoreOrder: false, // Enable to remove warnings about conflicting order
+            filename: '[name].min.css',
         }),
         new HtmlWebpackPlugin({
             template: 'src/index.html',
@@ -83,21 +77,12 @@ module.exports = {
             // PRODUCTION: JSON.stringify(ENV) === 'production',
             'process.env.NODE_ENV': JSON.stringify(ENV)
         }),
-        new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-        new OptimizeCSSAssetsPlugin({
-            cssProcessorPluginOptions: {
-              preset: ['default', { discardComments: { removeAll: true } }],
-            },
-            canPrint: true
-        })
+        new webpack.IgnorePlugin({ resourceRegExp: /^\.\/locale$/ })
     ],
     output: {
         filename: '[name].min.js',
-        path: path.join(__dirname, 'dist'),
-        publicPath: path.join(__dirname, 'dist'),
     },
     devServer: {
-        contentBase: path.join(__dirname, 'dist'),
         port: 3000
     }
 };
